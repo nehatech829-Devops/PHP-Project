@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        REPO_URL = 'https://github.com/nehatech829-Devops/parking.git'
+        REPO_URL = 'git@github.com:nehatech829-Devops/parking.git'
         BRANCH = 'main'
         DEPLOY_DIR = '/var/www/html/parking'
     }
@@ -11,7 +11,11 @@ pipeline {
 
         stage('Checkout Source Code') {
             steps {
-                git branch: "${BRANCH}", url: "${REPO_URL}"
+                git(
+                    branch: "${BRANCH}",
+                    credentialsId: 'github-ssh',
+                    url: "${REPO_URL}"
+                )
             }
         }
 
@@ -36,7 +40,7 @@ pipeline {
                 if [ -f composer.json ]; then
                     composer install --no-interaction --prefer-dist
                 else
-                    echo "composer.json not found. Skipping Composer."
+                    echo "composer.json not found. Skipping Composer installation."
                 fi
                 '''
             }
@@ -45,10 +49,7 @@ pipeline {
         stage('PHP Syntax Check') {
             steps {
                 sh '''
-                find . -name "*.php" -print0 | while IFS= read -r -d '' file
-                do
-                    php -l "$file"
-                done
+                find . -name "*.php" -exec php -l {} \\;
                 '''
             }
         }
@@ -61,7 +62,7 @@ pipeline {
             }
         }
 
-        stage('Archive Artifact') {
+        stage('Archive Build') {
             steps {
                 archiveArtifacts artifacts: 'parking.zip', fingerprint: true
             }
@@ -69,15 +70,15 @@ pipeline {
 
         stage('Deploy to Apache') {
             steps {
-                sh '''
+                sh """
                 sudo rm -rf ${DEPLOY_DIR}
                 sudo mkdir -p ${DEPLOY_DIR}
 
-                sudo cp -r . ${DEPLOY_DIR}
+                sudo cp -R * ${DEPLOY_DIR}/
 
                 sudo chown -R www-data:www-data ${DEPLOY_DIR}
                 sudo chmod -R 755 ${DEPLOY_DIR}
-                '''
+                """
             }
         }
 
@@ -85,14 +86,15 @@ pipeline {
             steps {
                 sh '''
                 sudo systemctl restart apache2
-                sudo systemctl status apache2 --no-pager
                 '''
             }
         }
 
-        stage('Deployment URL') {
+        stage('Verify Apache') {
             steps {
-                echo "Application URL: http://<SERVER-IP>/parking/"
+                sh '''
+                sudo systemctl status apache2 --no-pager
+                '''
             }
         }
     }
@@ -100,11 +102,12 @@ pipeline {
     post {
 
         success {
-            echo 'Build and Deployment Successful'
+            echo 'Application deployed successfully.'
+            echo 'Open: http://<Ubuntu-IP>/parking/'
         }
 
         failure {
-            echo 'Build or Deployment Failed'
+            echo 'Build or deployment failed.'
         }
 
         always {
