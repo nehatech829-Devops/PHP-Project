@@ -2,26 +2,15 @@ pipeline {
     agent any
 
     environment {
-        REPO_URL = 'git@github.com:nehatech829-Devops/PHP-Project.git'
-        BRANCH = 'main'
-        DEPLOY_DIR = '/var/www/html/parking'
+        DEPLOY_DIR = '/var/www/html/PHP-Project'
     }
 
     stages {
 
-        stage('Checkout Source Code') {
-            steps {
-                git(
-                    branch: "${BRANCH}",
-                    credentialsId: 'github-ssh',
-                    url: "${REPO_URL}"
-                )
-            }
-        }
-
         stage('Show Workspace') {
             steps {
                 sh '''
+                echo "Current Workspace:"
                 pwd
                 ls -la
                 '''
@@ -54,27 +43,15 @@ pipeline {
             }
         }
 
-        stage('Build Package') {
-            steps {
-                sh '''
-                zip -r parking.zip .
-                '''
-            }
-        }
-
-        stage('Archive Build') {
-            steps {
-                archiveArtifacts artifacts: 'parking.zip', fingerprint: true
-            }
-        }
-
         stage('Deploy to Apache') {
             steps {
                 sh """
+                echo "Deploying application..."
+
                 sudo rm -rf ${DEPLOY_DIR}
                 sudo mkdir -p ${DEPLOY_DIR}
 
-                sudo cp -R * ${DEPLOY_DIR}/
+                sudo cp -R . ${DEPLOY_DIR}/
 
                 sudo chown -R www-data:www-data ${DEPLOY_DIR}
                 sudo chmod -R 755 ${DEPLOY_DIR}
@@ -97,13 +74,20 @@ pipeline {
                 '''
             }
         }
+
+        stage('Deployment Complete') {
+            steps {
+                echo "======================================"
+                echo "Application deployed successfully!"
+                echo "URL: http://localhost/PHP-Project/"
+                echo "======================================"
+            }
+        }
     }
 
     post {
-
         success {
-            echo 'Application deployed successfully.'
-            echo 'Open: http://<Ubuntu-IP>/parking/'
+            echo 'Build and deployment completed successfully.'
         }
 
         failure {
