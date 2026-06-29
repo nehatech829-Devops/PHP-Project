@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        REPO_URL = 'git@github.com:nehatech829-Devops/parking.git'
+        REPO_URL = 'git@github.com:nehatech829-Devops/PHP-Project.git'
         BRANCH = 'main'
         DEPLOY_DIR = '/var/www/html/parking'
     }
