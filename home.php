@@ -111,7 +111,7 @@
             <div class="carousel-item active">
                 <img src="https://images.unsplash.com/photo-1506521781263-d8422e82f27a" class="d-block w-100">
                 <div class="carousel-caption">
-                    <h1>Vehicle Parking Management </h1>
+                    <h1>Vehicle Parking Management System</h1>
                     <p>Smart & Easy Way to Manage Your Parking Efficiently</p>
                     <a href="users/login.php" class="btn btn-light btn-lg me-2">
                       Book Parking
